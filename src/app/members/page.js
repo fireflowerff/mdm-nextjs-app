@@ -29,7 +29,8 @@ export default async function MembersPage(props) {
       <div className="p-10 text-red-600 bg-red-50 border border-red-200 rounded">
         <strong>Error:</strong> {error}
         <p className="text-sm mt-2 text-red-500">
-          Please ensure your PostgreSQL service is running in WSL.
+          Please ensure your PostgreSQL service is running in WSL. (Update and
+          push into GitHub)
         </p>
       </div>
     );
