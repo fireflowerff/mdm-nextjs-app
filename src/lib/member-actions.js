@@ -7,6 +7,53 @@ import { revalidatePath } from "next/cache";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 
+export async function getMemberById(id) {
+  try {
+    const result = await pool.query(
+      "SELECT id, member_code, first_name, last_name, email FROM members WHERE id = $1",
+      [id],
+    );
+    return result.rows[0]; // Returns the object or undefined
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch member.");
+  }
+}
+
+export async function updateMember(formData) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return { error: "Unauthorized" };
+  }
+
+  const id = formData.get("id");
+  const firstName = formData.get("first_name");
+  const lastName = formData.get("last_name");
+  const email = formData.get("email");
+
+  // Use .name to match your other functions
+  const modifier = session.user.name || session.user.email;
+
+  try {
+    await pool.query(
+      `UPDATE members 
+       SET first_name = $1, 
+           last_name = $2, 
+           email = $3, 
+           last_modified_by = $4, 
+           updated_at = NOW() 
+       WHERE id = $5`,
+      [firstName, lastName, email, modifier, id],
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Database Update Error:", error);
+    return { error: "Failed to update record in PostgreSQL." };
+  }
+}
+
 // Function to fetch all members from PostgreSQL
 export async function getMembers(query, page = 1) {
   const pageSize = 10;
@@ -124,21 +171,33 @@ export async function createMember(formData) {
 }
 
 export async function deleteMember(id) {
-  // 1. Get the current session
   const session = await auth();
-  const userName = session?.user?.name || "System";
+
+  // 1. Security Gate: Only ADMIN can delete
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized: Only administrators can delete members." };
+  }
+
+  const modifier = session.user.name || session.user.email;
 
   try {
-    // 2. Update status AND the last_modified_by column
+    // 2. Soft Delete: Update status to 'DELETED' instead of removing the row
+    // This matches your "View Archived/Deleted Members" logic
     await pool.query(
-      "UPDATE members SET status = 'DELETED', last_modified_by = $1 WHERE id = $2",
-      [userName, id],
+      `UPDATE members 
+       SET status = 'DELETED', 
+           last_modified_by = $1, 
+           updated_at = NOW() 
+       WHERE id = $2`,
+      [modifier, id],
     );
 
+    // 3. Refresh the Dashboard data immediately
     revalidatePath("/members");
     return { success: true };
-  } catch (err) {
-    return { error: "Failed to delete member." };
+  } catch (error) {
+    console.error("Delete Error:", error);
+    return { error: "Database Error: Could not archive member." };
   }
 }
 

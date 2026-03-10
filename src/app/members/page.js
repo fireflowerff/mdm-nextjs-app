@@ -117,6 +117,13 @@ export default async function MembersPage(props) {
 
               <td className="border p-2">{member.status}</td>
               <td className="border p-2">
+                <Link
+                  href={`/members/${member.id}/edit`}
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-center text-sm font-medium transition-colors"
+                >
+                  Edit Record
+                </Link>
+
                 {/* We use a Server Action here directly */}
                 <form
                   action={updateMemberStatus.bind(
