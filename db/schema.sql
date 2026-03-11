@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict UwW9ZlALCDrupvECmZqcLrJ1m5YqExzdl3CnUngMcJo1cE3DarFVmX6K7QKMJsl
+\restrict iOganc4RHdljY4nDdn5vbNPcM8sxKEzd6g9Z7fXNglEFVQd56JjflIAQeoNYMbv
 
--- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
--- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
+-- Dumped from database version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -37,6 +37,47 @@ ALTER FUNCTION public.update_modified_column() OWNER TO postgres;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: countries; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.countries (
+    id integer NOT NULL,
+    country_code character varying(10) NOT NULL,
+    country_name character varying(100) NOT NULL,
+    capital_city character varying(100),
+    latitude numeric(9,6),
+    longitude numeric(9,6),
+    last_modified_by character varying(100),
+    updated_at timestamp without time zone DEFAULT now(),
+    continent character varying(50)
+);
+
+
+ALTER TABLE public.countries OWNER TO postgres;
+
+--
+-- Name: countries_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.countries_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.countries_id_seq OWNER TO postgres;
+
+--
+-- Name: countries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.countries_id_seq OWNED BY public.countries.id;
+
 
 --
 -- Name: members; Type: TABLE; Schema: public; Owner: postgres
@@ -120,6 +161,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: countries id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.countries ALTER COLUMN id SET DEFAULT nextval('public.countries_id_seq'::regclass);
+
+
+--
 -- Name: members id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -131,6 +179,22 @@ ALTER TABLE ONLY public.members ALTER COLUMN id SET DEFAULT nextval('public.memb
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: countries countries_country_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_country_code_key UNIQUE (country_code);
+
+
+--
+-- Name: countries countries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_pkey PRIMARY KEY (id);
 
 
 --
@@ -191,5 +255,5 @@ CREATE TRIGGER update_members_modtime BEFORE UPDATE ON public.members FOR EACH R
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UwW9ZlALCDrupvECmZqcLrJ1m5YqExzdl3CnUngMcJo1cE3DarFVmX6K7QKMJsl
+\unrestrict iOganc4RHdljY4nDdn5vbNPcM8sxKEzd6g9Z7fXNglEFVQd56JjflIAQeoNYMbv
 
