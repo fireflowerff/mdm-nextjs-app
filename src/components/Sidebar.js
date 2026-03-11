@@ -10,11 +10,18 @@ const MENU_ITEMS = [
     roles: ["ADMIN", "USER"],
   },
   {
+    label: "Countries",
+    href: "/countries",
+    icon: "🗺️",
+    roles: ["ADMIN", "USER"],
+  },
+  {
     label: "Member Search",
     href: "/members/search",
     icon: "🔍",
     roles: ["ADMIN", "USER"],
   },
+
   {
     label: "User Management",
     href: "/admin/users",

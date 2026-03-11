@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import { withAuth, withAdmin } from "./action-utils";
 
 export async function getMemberById(id) {
   try {
@@ -98,16 +99,31 @@ export async function updateMemberStatus(id, currentStatus) {
   revalidatePath("/members"); // Refreshes the UI automatically
 }
 
-// Update member status (Server Action)
 export async function toggleMemberStatus(id, currentStatus) {
-  const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-  await pool.query("UPDATE members SET status = $1 WHERE id = $2", [
-    newStatus,
-    id,
-  ]);
+  return withAuth(async (user) => {
+    // 1. Determine the new status
+    const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    const modifier = user.name || user.email;
 
-  // This tells Next.js to clear the cache and show the updated data
-  revalidatePath("/members");
+    try {
+      // 2. Update PostgreSQL
+      await pool.query(
+        `UPDATE members 
+         SET status = $1, 
+             last_modified_by = $2, 
+             updated_at = NOW() 
+         WHERE id = $3`,
+        [newStatus, modifier, id],
+      );
+
+      // 3. Refresh the UI
+      revalidatePath("/members");
+      return { success: true };
+    } catch (err) {
+      console.error("Status Toggle Error:", err);
+      return { error: "Failed to toggle member status." };
+    }
+  });
 }
 
 export async function getMemberByCode(code) {
@@ -123,100 +139,96 @@ export async function getMemberByCode(code) {
 }
 
 export async function createMember(formData) {
-  // 1. Log EVERYTHING to the terminal
-  console.log("--- SERVER ACTION TRIGGERED ---");
+  return withAuth(async (user) => {
+    // 1. Extract values from formData
+    const code = formData.get("member_code")?.trim();
+    const first = formData.get("first_name")?.trim();
+    const last = formData.get("last_name")?.trim();
+    const email = formData.get("email")?.trim();
 
-  const rawData = {
-    member_code: formData.get("member_code"),
-    first_name: formData.get("first_name"),
-    last_name: formData.get("last_name"),
-    email: formData.get("email"),
-  };
+    // 2. Mandatory Field Validation (Business Logic)
+    if (!code || !first) {
+      return { error: "Member Code and First Name are mandatory fields." };
+    }
 
-  console.log("Form Data Received:", rawData);
+    // 3. Audit Info (using .name as per your consistency rule)
+    const modifier = user.name || user.email;
 
-  // 2. Simple Validation Check
-  if (!rawData.member_code || !rawData.first_name) {
-    console.error("Validation Failed: Missing required fields");
-    return { error: "Member Code and First Name are required." };
-  }
+    try {
+      await pool.query(
+        `INSERT INTO members (
+          member_code, 
+          first_name, 
+          last_name, 
+          email, 
+          last_modified_by, 
+          status, 
+          updated_at
+        ) 
+        VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW())`,
+        [code, first, last, email, modifier],
+      );
 
-  const session = await auth();
-  const userName = session?.user?.name || "System";
+      // 4. Refresh the dashboard so the new member appears
+      revalidatePath("/members");
+      return { success: true };
+    } catch (err) {
+      console.error("Database Insert Error:", err);
 
-  try {
-    console.log("Attempting PostgreSQL Insert...");
+      // PostgreSQL Unique Constraint Violation (Error Code 23505)
+      if (err.code === "23505") {
+        return { error: `Member Code "${code}" already exists in the system.` };
+      }
 
-    const result = await pool.query(
-      "INSERT INTO members (member_code, first_name, last_name, email, status, last_modified_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-      [
-        rawData.member_code,
-        rawData.first_name,
-        rawData.last_name,
-        rawData.email,
-        "ACTIVE",
-        userName,
-      ],
-    );
-
-    console.log("Insert Successful! New ID:", result.rows[0].id);
-
-    revalidatePath("/members");
-    return { success: true };
-  } catch (err) {
-    console.error("PostgreSQL Error Details:", err.message);
-    console.error("Error Code:", err.code);
-    return { error: `Database error: ${err.message}` };
-  }
+      return { error: "An unexpected database error occurred." };
+    }
+  });
 }
 
 export async function deleteMember(id) {
-  const session = await auth();
+  return withAdmin(async (user) => {
+    const modifier = user.name || user.email;
 
-  // 1. Security Gate: Only ADMIN can delete
-  if (session?.user?.role !== "ADMIN") {
-    return { error: "Unauthorized: Only administrators can delete members." };
-  }
+    try {
+      // Soft delete by setting status to 'DELETED'
+      await pool.query(
+        `UPDATE members 
+         SET status = 'DELETED', 
+             last_modified_by = $1, 
+             updated_at = NOW() 
+         WHERE id = $2`,
+        [modifier, id],
+      );
 
-  const modifier = session.user.name || session.user.email;
-
-  try {
-    // 2. Soft Delete: Update status to 'DELETED' instead of removing the row
-    // This matches your "View Archived/Deleted Members" logic
-    await pool.query(
-      `UPDATE members 
-       SET status = 'DELETED', 
-           last_modified_by = $1, 
-           updated_at = NOW() 
-       WHERE id = $2`,
-      [modifier, id],
-    );
-
-    // 3. Refresh the Dashboard data immediately
-    revalidatePath("/members");
-    return { success: true };
-  } catch (error) {
-    console.error("Delete Error:", error);
-    return { error: "Database Error: Could not archive member." };
-  }
+      revalidatePath("/members");
+      return { success: true };
+    } catch (err) {
+      console.error("Archive Error:", err);
+      return { error: "Database error: Could not archive the member." };
+    }
+  });
 }
 
 export async function recoverMember(id) {
-  const session = await auth();
-  const userName = session?.user?.name || "System";
+  return withAdmin(async (user) => {
+    const modifier = user.name || user.email;
 
-  try {
-    await pool.query(
-      "UPDATE members SET status = 'ACTIVE', last_modified_by = $1 WHERE id = $2",
-      [userName, id],
-    );
-
-    revalidatePath("/members");
-    revalidatePath("/members/archive");
-    return { success: true };
-  } catch (err) {
-    return { error: "Failed to recover member." };
-  }
+    try {
+      await pool.query(
+        `UPDATE members 
+         SET status = 'ACTIVE', 
+             last_modified_by = $1, 
+             updated_at = NOW() 
+         WHERE id = $2`,
+        [modifier, id],
+      );
+      revalidatePath("/members/archive");
+      revalidatePath("/members");
+      return { success: true };
+    } catch (err) {
+      return { error: "Failed to restore member." };
+    }
+  });
 }
 
 export async function getArchivedMembers() {
