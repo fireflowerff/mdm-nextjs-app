@@ -8,7 +8,38 @@ import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import { withAuth, withAdmin } from "./action-utils";
 
+import { db } from "@/db";
+import { members, countries } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
 export async function getMemberById(id) {
+  try {
+    // Standardizing the ID to a number
+    const memberId = parseInt(id);
+    if (isNaN(memberId)) return null;
+
+    const result = await db
+      .select({
+        id: members.id,
+        member_code: members.memberCode,
+        first_name: members.firstName,
+        last_name: members.lastName,
+        email: members.email,
+        country_id: members.countryId,
+        country_name: countries.countryName, // Ensure this exists in schema.ts
+      })
+      .from(members)
+      .leftJoin(countries, eq(members.countryId, countries.id))
+      .where(eq(members.id, memberId));
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("Fetch Error:", error); // This is where your Object.entries error triggers
+    return null;
+  }
+}
+
+export async function getMemberById_old(id) {
   try {
     const result = await pool.query(
       "SELECT id, member_code, first_name, last_name, email FROM members WHERE id = $1",
@@ -22,6 +53,40 @@ export async function getMemberById(id) {
 }
 
 export async function updateMember(formData) {
+  // 1. Get the raw value
+  const rawCountryId = formData.get("country_id");
+  const id = parseInt(formData.get("id"));
+
+  // 2. Validate and Parse safely
+  // If rawCountryId is null, empty, or not a number, set to null or throw error
+  const country_id =
+    rawCountryId && !isNaN(parseInt(rawCountryId))
+      ? parseInt(rawCountryId)
+      : null;
+
+  if (!id) return { error: "Missing Member ID." };
+
+  try {
+    await db
+      .update(members)
+      .set({
+        firstName: formData.get("first_name"),
+        lastName: formData.get("last_name"),
+        email: formData.get("email"),
+        countryId: country_id, // Now it's either a valid Number or null
+        updatedAt: new Date(),
+      })
+      .where(eq(members.id, id));
+
+    revalidatePath("/members");
+    return { success: true };
+  } catch (err) {
+    console.error("Update Error:", err);
+    return { error: "Database update failed." };
+  }
+}
+
+export async function updateMember_old(formData) {
   const session = await auth();
 
   if (!session?.user) {
@@ -145,6 +210,7 @@ export async function createMember(formData) {
     const first = formData.get("first_name")?.trim();
     const last = formData.get("last_name")?.trim();
     const email = formData.get("email")?.trim();
+    const country_id = formData.get("country_id");
 
     // 2. Mandatory Field Validation (Business Logic)
     if (!code || !first) {
@@ -163,10 +229,11 @@ export async function createMember(formData) {
           email, 
           last_modified_by, 
           status, 
-          updated_at
+          updated_at,
+          country_id
         ) 
-        VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW())`,
-        [code, first, last, email, modifier],
+        VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW(), $6)`,
+        [code, first, last, email, modifier, country_id],
       );
 
       // 4. Refresh the dashboard so the new member appears

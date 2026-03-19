@@ -1,5 +1,6 @@
 // src/app/members/[id]/edit/page.js
 import { getMemberById } from "@/lib/member-actions"; // Using your centralized library
+import { getCountries } from "@/lib/country-actions"; // Fetch our standardized LOV
 import EditMemberForm from "@/components/EditMemberForm";
 import { notFound } from "next/navigation";
 
@@ -8,8 +9,14 @@ export default async function EditMemberPage({ params }) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
 
-  // 1. Call your existing library function
-  const member = await getMemberById(id);
+  // Previous version - single call async function to get member information
+  // const member = await getMemberById(id);
+
+  // New version - Parallel fetch: member details and the list of countries
+  const [member, countriesResponse] = await Promise.all([
+    getMemberById(id),
+    getCountries(),
+  ]);
 
   // 2. Standardize the "Not Found" logic
   if (!member) {
@@ -23,7 +30,10 @@ export default async function EditMemberPage({ params }) {
       </h1>
 
       {/* 3. Pass the data to the Client Component Form */}
-      <EditMemberForm member={member} />
+      <EditMemberForm
+        member={member}
+        countries={countriesResponse.data || []}
+      />
     </div>
   );
 }

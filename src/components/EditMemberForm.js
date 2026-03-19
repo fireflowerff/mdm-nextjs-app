@@ -1,34 +1,53 @@
+// components/EditMemberForm.js
 "use client";
 
-import { useState } from "react"; // 1. Add useState
+import { useState } from "react";
 import { updateMember } from "@/lib/member-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import SubmitButton from "@/components/SubmitButton";
 
-export default function EditMemberForm({ member }) {
+export default function EditMemberForm({ member, countries }) {
   const router = useRouter();
 
-  // 2. Initialize local state with the member data
+  // Find the initial country name based on the member's country_id
+  const initialCountry = countries.find((c) => c.id === member.country_id);
+
   const [formData, setFormData] = useState({
     first_name: member.first_name,
     last_name: member.last_name,
     email: member.email,
+    // Use the joined name directly from the member object
+    country_name: member.country_name || "",
+    country_id: member.country_id,
   });
 
-  // Handle input changes locally
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "country_search") {
+      // Logic for the Datalist: Find the ID when the name matches
+      const match = countries.find((c) => c.country_name === value);
+      setFormData((prev) => ({
+        ...prev,
+        country_name: value,
+        country_id: match ? match.id : prev.country_id,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   async function handleUpdate(formRawData) {
+    // Append the hidden country_id to ensure it's sent
+    formRawData.set("country_id", formData.country_id);
+
     const result = await updateMember(formRawData);
 
     if (result?.error) {
       toast.error(result.error);
     } else {
       toast.success("Member updated successfully!");
-
       setTimeout(() => {
         router.push("/members");
         router.refresh();
@@ -42,17 +61,30 @@ export default function EditMemberForm({ member }) {
       className="space-y-4 bg-white p-6 rounded-lg shadow-sm border"
     >
       <input type="hidden" name="id" value={member.id} />
+      <input type="hidden" name="country_id" value={formData.country_id} />
 
-      <div>
-        <label className="block font-medium mb-1 text-gray-500">
-          Member Code (Read-Only)
+      {/* Country Datalist Search */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1 text-gray-700">
+          Country (Search)
         </label>
         <input
-          name="member_code"
-          defaultValue={member.member_code}
-          readOnly
-          className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed outline-none"
+          list="country-list"
+          name="country_search"
+          value={formData.country_name}
+          onChange={handleChange}
+          placeholder="Start typing a country..."
+          className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+          autoComplete="off"
         />
+        <datalist id="country-list">
+          {countries.map((c) => (
+            <option key={c.id} value={c.country_name} />
+          ))}
+        </datalist>
+        <p className="text-xs text-gray-400 mt-1">
+          Internal ID: {formData.country_id || "None"}
+        </p>
       </div>
 
       <div className="flex gap-4">
@@ -62,10 +94,10 @@ export default function EditMemberForm({ member }) {
           </label>
           <input
             name="first_name"
-            value={formData.first_name} // 3. Use 'value' instead of 'defaultValue'
-            onChange={handleChange} // 4. Update local state
+            value={formData.first_name}
+            onChange={handleChange}
             required
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full border p-2 rounded"
           />
         </div>
         <div className="flex-1">
@@ -77,7 +109,7 @@ export default function EditMemberForm({ member }) {
             value={formData.last_name}
             onChange={handleChange}
             required
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full border p-2 rounded"
           />
         </div>
       </div>
@@ -117,7 +149,7 @@ export default function EditMemberForm({ member }) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
         >
           Cancel
         </button>
