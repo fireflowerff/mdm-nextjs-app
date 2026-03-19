@@ -1,54 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🌍 Next.js Master Data Management (MDM)
 
-## Getting Started
+A high-performance, vendor-neutral Master Data Management application built with **Next.js 16**, **Drizzle ORM**, and **PostgreSQL**.
 
-First, run the development server:
+## 🎯 Project Goals
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The goal of this MDM system is to provide a "Single Source of Truth" for member data, ensuring high data quality and system portability.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Data Integrity**: Built-in validation to ensure member records match reference data (Countries).
+- **Database Portability**: Uses Drizzle ORM to abstract SQL logic, allowing migration between PostgreSQL, MySQL, or Oracle with minimal code changes.
+- **Performance**: Optimized Server Actions and Parallel Data Fetching (`Promise.all`) for fast UI response times.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Key Features
 
-## Learn More
+### 🔍 Searchable Reference Data
 
-To learn more about Next.js, take a look at the following resources:
+Uses a lightweight `<datalist>` component to allow users to search through hundreds of countries instantly without the overhead of heavy third-party dropdown libraries.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### ⚡ Parallel Data Fetching
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The application fetches Member details and Country lists simultaneously using asynchronous promises to reduce page load time by up to 50%.
 
-## Deploy on Vercel
+### 🔄 Intelligent Upsert Logic
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Supports "Merge" operations that automatically decide whether to Insert a new record or Update an existing one based on the unique `Member Code`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
 
-# MDM Master Data Portal
+## 🛠 Tech Stack
 
-A Next.js 15 application for managing member master data with PostgreSQL.
+- **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
+- **Language**: JavaScript / TypeScript
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
+- **Database**: PostgreSQL
+- **Styling**: Tailwind CSS
+- **Notifications**: Sonner (Toast alerts)
 
-## Features
+---
 
-- Google OAuth 2.0 & Credentials Authentication
-- Role-Based Access Control (Admin/User)
-- Audit Trail (Last Login Tracking)
-- Toast Notifications (Sonner)
+## 🚀 Quick Start
 
-## Setup
+1.  **Install**: `npm install`
+2.  **Configure**: Create `.env.local` with your `DATABASE_URL`.
+3.  **Setup DB**: Import `schema_backup.sql` to your local Postgres instance.
+4.  **Run**: `npm run dev`
 
-1. Clone the repository.
-2. Copy `.env.example` to `.env.local` and fill in your Google Cloud keys.
-3. Run `npm install`.
-4. Run `npm run dev`.
+For detailed setup instructions, please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+---
+
+## 🛡 Soft Delete Strategy
+
+This system implements a **Soft Delete** pattern. Records are never permanently removed from the database; instead, they are flagged with a `deleted_at` timestamp to maintain a full audit trail and allow for data recovery.
+
+---
+
+## 📄 License
+
+Internal Corporate Use - All Rights Reserved.
