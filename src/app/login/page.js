@@ -51,7 +51,7 @@ export default async function LoginPage({ searchParams }) {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/members" });
+            await signIn("google", { redirectTo: "/dashboard" });
           }}
         >
           <button

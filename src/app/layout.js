@@ -11,20 +11,16 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const session = await auth();
-
+  const userRole = session?.user?.role || "USER";
   return (
     <html lang="en">
-      <body>
+      <body className="bg-gray-50 min-h-screen">
         <div className="flex">
           {/* Our dynamic sidebar we built earlier */}
-          <Sidebar />
-
+          {/* <Sidebar /> */}
+          {session && <Sidebar session={session} userRole={userRole} />}
           {/* Main content area: ml-64 shifts it only if sidebar is visible */}
-          <main
-            className={`flex-1 ${session ? "ml-64" : ""} p-8 bg-gray-50 min-h-screen`}
-          >
-            {children}
-          </main>
+          <main className="flex-1 p-8">{children}</main>
         </div>
 
         {/* 2. Add the Toaster here, at the very bottom of the body */}
