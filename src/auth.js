@@ -21,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         // Inside Credentials authorize function in src/auth.js
         const res = await pool.query(
-          "SELECT id, username, email, role, password_hash FROM users WHERE username = $1 AND status = 'ACTIVE'",
+          "SELECT id, username, email, role, menu_group_id, password_hash FROM users WHERE username = $1 AND status = 'ACTIVE'",
           [credentials.username],
         );
         const user = res.rows[0];
@@ -58,7 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // If it's a new Google login, user.role won't exist yet, so we fetch it
         if (!user.role) {
           const res = await pool.query(
-            "SELECT role, last_login FROM users WHERE email = $1",
+            "SELECT role, menu_group_id, last_login FROM users WHERE email = $1",
             [user.email],
           );
           token.role = res.rows[0]?.role;
@@ -75,6 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.role) {
         session.user.role = token.role;
         session.user.lastLogin = token.lastLogin;
+        session.user.menu_group_id = token.menu_group_id; // Add this!
       }
       return session;
     },

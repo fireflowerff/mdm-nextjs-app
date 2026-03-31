@@ -1,0 +1,45 @@
+// src/app/layout.js
+import "./globals.css";
+import Sidebar from "@/components/Sidebar";
+import { getSidebarMenu } from "@/lib/menu";
+import { getServerSession } from "next-auth"; // Or your auth method
+import { auth } from "@/auth";
+import { Toaster } from "sonner"; // 1. Add this import
+
+export const metadata = {
+  title: "MDM Portal",
+  description: "Master Data Management System",
+};
+
+export default async function RootLayout({ children }) {
+  const session = await auth();
+  const userRole = session?.user?.role || "USER";
+  return (
+    <html lang="en">
+      <body className="bg-gray-50 min-h-screen">
+        <div className="flex">
+          {/* Our dynamic sidebar we built earlier */}
+          {/* <Sidebar /> */}
+          {session && <Sidebar session={session} userRole={userRole} />}
+          {/* Main content area: ml-64 shifts it only if sidebar is visible */}
+          <main className="flex-1 p-8">{children}</main>
+        </div>
+
+        {/* 2. Add the Toaster here, at the very bottom of the body */}
+        {/* 'richColors' makes Success green and Error red automatically */}
+        <Toaster
+          position="top-right" // Moves it to the top right
+          richColors // Keeps the Red/Green colors
+          closeButton // Adds an 'X' to close it
+          toastOptions={{
+            style: {
+              fontSize: "18px", // Makes the text bigger
+              padding: "20px", // Adds space around the text
+              width: "400px", // Makes the box wider for long errors
+            },
+          }}
+        />
+      </body>
+    </html>
+  );
+}

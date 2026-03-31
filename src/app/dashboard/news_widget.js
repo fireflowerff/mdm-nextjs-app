@@ -13,8 +13,8 @@ export default async function NewsWidget(props) {
           📰 Industry News
         </h3>
         <div className="space-y-4">
-          {news.map((article) => (
-            <div className="group cursor-pointer">
+          {news.map((article, index) => (
+            <div key={index} className="group cursor-pointer">
               <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">
                 {article.source}
               </p>

@@ -2,7 +2,8 @@
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { auth } from "@/auth";
-import { Toaster } from "sonner"; // 1. Add this import
+import { Toaster } from "sonner";
+import { getSidebarMenu } from "@/lib/menu"; // Import the fetcher we created
 
 export const metadata = {
   title: "MDM Portal",
@@ -11,29 +12,45 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const session = await auth();
+
+  // 1. Determine the menu group to fetch.
+  // In a real scenario, this would be session.user.menu_group_id.
+  // For now, we'll default to '1' for ADMIN as per your sample data.
+  let menuData = [];
+  if (session) {
+    const menuGroupId = session.user.role === "ADMIN" ? 1 : 2;
+    menuData = await getSidebarMenu(menuGroupId);
+  }
+
   const userRole = session?.user?.role || "USER";
+
   return (
     <html lang="en">
       <body className="bg-gray-50 min-h-screen">
         <div className="flex">
-          {/* Our dynamic sidebar we built earlier */}
-          {/* <Sidebar /> */}
-          {session && <Sidebar session={session} userRole={userRole} />}
-          {/* Main content area: ml-64 shifts it only if sidebar is visible */}
+          {/* 2. Pass menuData into the Sidebar along with session and role */}
+          {session && (
+            <Sidebar
+              session={session}
+              userRole={userRole}
+              menuData={menuData}
+            />
+          )}
+
+          {/* Main content area */}
           <main className="flex-1 p-8">{children}</main>
         </div>
 
-        {/* 2. Add the Toaster here, at the very bottom of the body */}
-        {/* 'richColors' makes Success green and Error red automatically */}
+        {/* 3. Your Toast notifications configuration */}
         <Toaster
-          position="top-right" // Moves it to the top right
-          richColors // Keeps the Red/Green colors
-          closeButton // Adds an 'X' to close it
+          position="top-right"
+          richColors
+          closeButton
           toastOptions={{
             style: {
-              fontSize: "18px", // Makes the text bigger
-              padding: "20px", // Adds space around the text
-              width: "400px", // Makes the box wider for long errors
+              fontSize: "18px",
+              padding: "20px",
+              width: "400px",
             },
           }}
         />

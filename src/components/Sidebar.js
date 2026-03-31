@@ -1,47 +1,58 @@
-"use client"; // Now a Client Component to handle state
+"use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // For the breadcrumb feature later
+import { usePathname } from "next/navigation";
 
-export default function Sidebar({ session, userRole }) {
+export default function Sidebar({ session, menuData }) {
   const [isOpen, setIsOpen] = useState(true);
   const pathname = usePathname();
-  const MENU_ITEMS = [
-    {
-      label: "Dashboard",
-      href: "/dashboard",
-      icon: "📊",
-      roles: ["ADMIN", "USER"],
-    },
-    {
-      label: "Countries",
-      href: "/countries",
-      icon: "🗺️",
-      roles: ["ADMIN", "USER"],
-    },
-    {
-      label: "Member",
-      href: "/members",
-      icon: "🔍",
-      roles: ["ADMIN", "USER"],
-    },
-    {
-      label: "User Management",
-      href: "/admin/users",
-      icon: "👥",
-      roles: ["ADMIN"],
-    },
-    {
-      label: "Master Data (LOV)",
-      href: "/admin/lov",
-      icon: "⚙️",
-      roles: ["ADMIN"],
-    },
-  ];
+
+  // Recursive component to render menu items
+  const NavItem = ({ item }) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isActive = pathname === item.function_url;
+
+    if (hasChildren) {
+      return (
+        <details
+          className="group"
+          open={pathname.startsWith(item.function_url || "!")}
+        >
+          <summary className="flex items-center justify-between p-3 rounded cursor-pointer hover:bg-gray-800 text-gray-300 transition-colors list-none">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">📁</span>
+              <span className="font-medium">{item.display_name}</span>
+            </div>
+            <span className="text-xs transition-transform group-open:rotate-180">
+              ▼
+            </span>
+          </summary>
+          <div className="pl-6 mt-1 space-y-1 border-l border-gray-700 ml-4">
+            {item.children.map((child) => (
+              <NavItem key={child.id} item={child} />
+            ))}
+          </div>
+        </details>
+      );
+    }
+
+    return (
+      <Link
+        href={item.function_url || "#"}
+        className={`flex items-center gap-3 p-3 rounded transition-all whitespace-nowrap ${
+          isActive
+            ? "bg-blue-600 text-white shadow-md"
+            : "text-gray-400 hover:bg-gray-800 hover:text-white"
+        }`}
+      >
+        <span className="text-lg">{isActive ? "🔹" : "📄"}</span>
+        <span>{item.display_name}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
-      {/* 1. The Floating Toggle Button (Breadcrumb Style) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-5 left-5 z-50 p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-all text-xl"
@@ -49,54 +60,42 @@ export default function Sidebar({ session, userRole }) {
         {isOpen ? "✕" : "☰"}
       </button>
 
-      {/* 2. The Sidebar Container */}
       <aside
-        className={`
-          fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 z-40
-          ${isOpen ? "w-64 opacity-100" : "w-0 opacity-0 pointer-events-none -translate-x-full"}
-        `}
+        className={`fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 z-40 ${
+          isOpen ? "w-64" : "w-0 -translate-x-full"
+        }`}
       >
-        <div className="p-6 pt-16 text-xl font-bold border-b border-gray-800 text-blue-400 whitespace-nowrap overflow-hidden">
-          MDM Admin Role
+        <div className="p-6 pt-16 text-xl font-bold border-b border-gray-800 text-blue-400 truncate">
+          MDM {session?.user?.role || "Platform"}
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-x-hidden">
-          {MENU_ITEMS.filter((item) => item.roles.includes(userRole)).map(
-            (item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 p-3 rounded hover:bg-gray-800 transition-colors whitespace-nowrap"
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ),
-          )}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+          {menuData?.map((item) => (
+            <NavItem key={item.id} item={item} />
+          ))}
         </nav>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-gray-800 bg-gray-950 overflow-hidden">
-          <div className="mb-4 whitespace-nowrap">
-            <p className="text-xs text-gray-500 uppercase">Logged in as</p>
-            <p className="text-sm font-medium truncate">
+        <div className="p-4 border-t border-gray-800 bg-gray-950">
+          <div className="mb-4">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+              User
+            </p>
+            <p className="text-sm font-medium truncate text-gray-300">
               {session?.user?.name}
             </p>
           </div>
-
           <button
-            onClick={() => (window.location.href = "/api/auth/signout")} // Simple client-side logout
-            className="w-full flex items-center justify-center gap-2 p-2 text-sm font-medium text-red-400 hover:bg-red-900/20 rounded border border-transparent hover:border-red-900/50"
+            onClick={() => (window.location.href = "/api/auth/signout")}
+            className="w-full flex items-center justify-center gap-2 p-2 text-sm font-medium text-red-400 hover:bg-red-900/20 rounded border border-red-900/30 transition-colors"
           >
-            <span>🚪</span> Logout
+            Logout
           </button>
         </div>
       </aside>
 
-      {/* 3. Main Content Spacer: This pushes your page content when menu is open */}
-      {/* THIS IS THE KEY: The Dynamic Spacer */}
+      {/* Dynamic Spacer for Main Content */}
       <div
-        className={`transition-all duration-300 ease-in-out`}
+        className="transition-all duration-300 ease-in-out"
         style={{ width: isOpen ? "256px" : "0px", flexShrink: 0 }}
       />
     </>
