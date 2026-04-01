@@ -32,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.username,
             role: user.role,
             email: user.email,
+            menu_group_id: user.menu_group_id,
           };
         }
         return null;
@@ -39,43 +40,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // THE GUARD: Intercept the login before the session is created
     async signIn({ user, account }) {
       if (account.provider === "google") {
         const res = await pool.query(
-          "SELECT role FROM users WHERE email = $1 AND status = 'ACTIVE'",
+          "SELECT role, menu_group_id FROM users WHERE email = $1 AND status = 'ACTIVE'",
           [user.email],
         );
-        // Only allow if they exist in your local MDM user table
-        return res.rows.length > 0;
+        // Important: Attach the data to the user object so the JWT callback can see it
+        if (res.rows.length > 0) {
+          user.role = res.rows[0].role;
+          user.menu_group_id = res.rows[0].menu_group_id;
+          return true;
+        }
+        return false;
       }
       return true;
     },
 
-    // THE BADGE MAKER: Persist the Role into the JWT token
     async jwt({ token, user }) {
+      // The 'user' object is only available the VERY FIRST time this callback runs after login
       if (user) {
-        // If it's a new Google login, user.role won't exist yet, so we fetch it
-        if (!user.role) {
+        token.role = user.role;
+        token.menu_group_id = user.menu_group_id;
+
+        // If Google didn't have these (backup check)
+        if (!token.role || !token.menu_group_id) {
           const res = await pool.query(
-            "SELECT role, menu_group_id, last_login FROM users WHERE email = $1",
-            [user.email],
+            "SELECT role, menu_group_id FROM users WHERE email = $1 OR username = $2",
+            [user.email, user.name],
           );
           token.role = res.rows[0]?.role;
-          token.lastLogin = res.rows[0]?.last_login;
-        } else {
-          token.role = user.role;
+          token.menu_group_id = res.rows[0]?.menu_group_id;
         }
       }
       return token;
     },
 
-    // THE BADGE SCANNER: Make the Role available to the Frontend/UI
     async session({ session, token }) {
-      if (token?.role) {
+      // Transfer everything from the Token to the Session
+      if (session.user) {
         session.user.role = token.role;
+        session.user.menu_group_id = token.menu_group_id;
         session.user.lastLogin = token.lastLogin;
-        session.user.menu_group_id = token.menu_group_id; // Add this!
       }
       return session;
     },

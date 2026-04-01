@@ -8,6 +8,7 @@ export default async function MembersPage(props) {
   const session = await auth(); // Get the current user session
   const isAdmin = session?.user?.role === "ADMIN";
   console.log("Current User Role:", session?.user?.role); // This shows in your P17 terminal
+  console.log("Current Menu ID:", session?.user?.menu_group_id); // This shows in your P17 terminal
 
   // Start both fetches at once for better performance
   // const weatherPromise = getWeatherData(22.3193, 114.1694); // You could later dynamicize this

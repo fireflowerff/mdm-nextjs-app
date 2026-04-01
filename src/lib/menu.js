@@ -1,5 +1,32 @@
 import pool from "./db";
 
+export async function getAllMenuGroups() {
+  const { rows } = await pool.query(
+    "SELECT id, menu_name, menu_code FROM public.menu_group ORDER BY menu_name",
+  );
+  return rows;
+}
+
+export async function getAllFunctions() {
+  const { rows } = await pool.query(
+    "SELECT id, function_name FROM public.app_functions ORDER BY function_name",
+  );
+  return rows;
+}
+
+export async function getMenuItemsByGroup(groupId) {
+  const { rows } = await pool.query(
+    `SELECT mi.*, af.function_name, smg.menu_name as sub_menu_name
+     FROM public.menu_items mi
+     LEFT JOIN public.app_functions af ON mi.app_function_id = af.id
+     LEFT JOIN public.menu_group smg ON mi.sub_menu_group_id = smg.id
+     WHERE mi.menu_group_id = $1
+     ORDER BY mi.menu_item_seq ASC`,
+    [groupId],
+  );
+  return rows;
+}
+
 export async function getSidebarMenu(menuGroupId) {
   const query = `
     WITH RECURSIVE menu_tree AS (

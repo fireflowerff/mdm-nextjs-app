@@ -315,7 +315,7 @@ export async function authenticate(formData) {
     // Add 'redirectTo' to force the navigation to the member list
     await signIn("credentials", {
       ...Object.fromEntries(formData),
-      redirectTo: "/members",
+      redirectTo: "/dashboard",
     });
   } catch (error) {
     if (error instanceof AuthError) {

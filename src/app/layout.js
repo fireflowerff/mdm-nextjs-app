@@ -18,7 +18,7 @@ export default async function RootLayout({ children }) {
   // For now, we'll default to '1' for ADMIN as per your sample data.
   let menuData = [];
   if (session) {
-    const menuGroupId = session.user.role === "ADMIN" ? 1 : 2;
+    const menuGroupId = session.user.menu_group_id;
     menuData = await getSidebarMenu(menuGroupId);
   }
 

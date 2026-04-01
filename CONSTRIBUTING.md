@@ -62,6 +62,19 @@ To ensure your local database matches the application schema, you can use the pr
 psql -U postgres -d postgres -f schema_backup.sql
 ```
 
+Metadata backup
+(1) App function and menu group
+
+```bash
+pg_dump -U postgres -t menu_group -t menu_items -t app_functions --data-only mdm_db > mdm_metadata_seed.sql
+```
+
+(2) App function and menu table
+
+```bash
+pg_dump -U postgres -s -t menu_group -t menu_items -t app_functions mdm_db > mdm_metadata_schema.sql
+```
+
 Alternatively, if you are making changes to the TypeScript schema, use Drizzle Kit to push updates:
 
 ```bash
