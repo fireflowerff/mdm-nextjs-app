@@ -1,5 +1,45 @@
 # Technical Reference of using Hooks
 
+### Summary Table for Quick Review
+
+| Hook          | Purpose                      | Does it trigger re-render?  |
+| :------------ | :--------------------------- | :-------------------------- |
+| `useState`    | Manage data                  | **Yes**                     |
+| `useEffect`   | Sync with external systems   | No (it runs _after_ render) |
+| `useRef`      | Grab DOM/Store "silent" data | **No**                      |
+| `useMemo`     | Cache a value/result         | No                          |
+| `useCallback` | Cache a function             | No                          |
+
+### 1. useState
+
+**The "Memory" Hook.**
+This is how a component remembers things between renders. When you update a state variable, React re-renders the component to show the new data.
+
+- **Usage:** For anything that changes on the screen (form inputs, toggles, data from an API).
+- **Example:** `const [count, setCount] = useState(0);`
+
+## 4. `useEffect` (Lifecycle & Synchronization)
+
+**Feature:** Handles "Side Effects" like fetching data when the URL changes or focusing a UI element when a modal opens.
+
+### Code Snippet: Route-based Data Loading
+
+```typescript
+useEffect(() => {
+  if (routePmtNo && !hasQueryRun.current) {
+    hasQueryRun.current = true; // Prevents double-loading
+    handleCmdPopOk(routePmtNo);
+  }
+}, [routePmtNo]);
+```
+
+**The "Side Effect" Hook.**
+This tells React: "After you finish rendering, run this extra bit of code." It’s for synchronization with systems outside of React.
+
+- **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
+- **The Dependency Array:** \* `[]`: Runs only once (on mount).
+  - `[data]`: Runs every time `data` changes.
+
 ## 1. `useReducer` + `useContext` (State Management)
 
 **Feature:** This is the "Central Brain" pattern. It avoids "Prop Drilling" by providing a global state to all child components (Header, Tabs, Modals).
@@ -69,30 +109,6 @@ A ref is a box that holds a value that stays the same across renders, but **chan
 
 - **Usage:** 1. Accessing a DOM element directly (e.g., focusing an input). 2. Storing a value that you need to keep track of (like a timer ID) without making the UI refresh.
 
-## 4. `useEffect` (Lifecycle & Synchronization)
-
-**Feature:** Handles "Side Effects" like fetching data when the URL changes or focusing a UI element when a modal opens.
-
-### Code Snippet: Route-based Data Loading
-
-```typescript
-useEffect(() => {
-  if (routePmtNo && !hasQueryRun.current) {
-    hasQueryRun.current = true; // Prevents double-loading
-    handleCmdPopOk(routePmtNo);
-  }
-}, [routePmtNo]);
-```
-
-### 2. useEffect
-
-**The "Side Effect" Hook.**
-This tells React: "After you finish rendering, run this extra bit of code." It’s for synchronization with systems outside of React.
-
-- **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
-- **The Dependency Array:** \* `[]`: Runs only once (on mount).
-  - `[data]`: Runs every time `data` changes.
-
 ## 5. `useMemo` (Derived State)
 
 **Feature:** Calculates a value based on other state variables and caches it. It only recalculates if the inputs change.
@@ -135,33 +151,3 @@ It sounds like you're diving into the "big five" of React hooks! Reviewing a bos
 Think of **State** hooks as the data that changes, and **Effect/Memoization** hooks as the tools that control _when_ and _how_ that data updates.
 
 ---
-
-### 1. useState
-
-**The "Memory" Hook.**
-This is how a component remembers things between renders. When you update a state variable, React re-renders the component to show the new data.
-
-- **Usage:** For anything that changes on the screen (form inputs, toggles, data from an API).
-- **Example:** `const [count, setCount] = useState(0);`
-
----
-
-### 4.
-
-### Summary Table for Quick Review
-
-| Hook          | Purpose                      | Does it trigger re-render?  |
-| :------------ | :--------------------------- | :-------------------------- |
-| `useState`    | Manage data                  | **Yes**                     |
-| `useEffect`   | Sync with external systems   | No (it runs _after_ render) |
-| `useRef`      | Grab DOM/Store "silent" data | **No**                      |
-| `useMemo`     | Cache a value/result         | No                          |
-| `useCallback` | Cache a function             | No                          |
-
----
-
-### A Tip for your Code Review
-
-If you see `useMemo` or `useCallback` used everywhere, keep an eye out. Sometimes developers "over-memoize," which can actually make the code harder to read without providing a real performance boost. React is usually fast enough without them unless you're dealing with huge data sets or complex animations!
-
-**Would you like me to look at a specific snippet of your boss's code to explain how these hooks are interacting in that context?**
