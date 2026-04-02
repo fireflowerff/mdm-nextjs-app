@@ -96,6 +96,15 @@ const validationErrors = useMemo(
 );
 ```
 
+useMemo vs. 5. useCallback
+
+These two are often confused because they both exist for **performance optimization (memoization).**
+
+| Hook              | What it caches (memoizes)     | Use Case                                                                                        |
+| :---------------- | :---------------------------- | :---------------------------------------------------------------------------------------------- |
+| **`useMemo`**     | The **result** of a function. | Avoid recalculating expensive math or filtering large arrays on every render.                   |
+| **`useCallback`** | The **function itself**.      | Prevent a child component from re-rendering unnecessarily because a function "looks new" to it. |
+
 ---
 
 ## Summary of Data Flow Patterns
@@ -141,14 +150,7 @@ A ref is a box that holds a value that stays the same across renders, but **chan
 
 ---
 
-### 4. useMemo vs. 5. useCallback
-
-These two are often confused because they both exist for **performance optimization (memoization).**
-
-| Hook              | What it caches (memoizes)     | Use Case                                                                                        |
-| :---------------- | :---------------------------- | :---------------------------------------------------------------------------------------------- |
-| **`useMemo`**     | The **result** of a function. | Avoid recalculating expensive math or filtering large arrays on every render.                   |
-| **`useCallback`** | The **function itself**.      | Prevent a child component from re-rendering unnecessarily because a function "looks new" to it. |
+### 4.
 
 ### Summary Table for Quick Review
 
