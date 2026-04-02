@@ -1,12 +1,4 @@
-That is a great idea. Having a "Technical Playbook" for this specific project will make your future Next.js and React tasks much easier, as these patterns are common in professional enterprise apps.
-
-Here is a structured markdown reference for the **CCL10100 Technical Library**.
-
----
-
-# Technical Reference: CCL10100 React Patterns
-
-This document summarizes the core React Hooks and architectural patterns used in the **Maintain Payment / Receipt** module.
+# Technical Reference of using Hooks
 
 ## 1. `useReducer` + `useContext` (State Management)
 
@@ -117,4 +109,61 @@ const validationErrors = useMemo(
 
 ---
 
-**Does this look like a good summary for your technical library, or would you like me to add more detail on the TypeScript `interface` structures as well?**
+It sounds like you're diving into the "big five" of React hooks! Reviewing a boss's code can be intimidating, but understanding these hooks will make the logic much clearer.
+
+Think of **State** hooks as the data that changes, and **Effect/Memoization** hooks as the tools that control _when_ and _how_ that data updates.
+
+---
+
+### 1. useState
+
+**The "Memory" Hook.**
+This is how a component remembers things between renders. When you update a state variable, React re-renders the component to show the new data.
+
+- **Usage:** For anything that changes on the screen (form inputs, toggles, data from an API).
+- **Example:** `const [count, setCount] = useState(0);`
+
+### 2. useEffect
+
+**The "Side Effect" Hook.**
+This tells React: "After you finish rendering, run this extra bit of code." It’s for synchronization with systems outside of React.
+
+- **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
+- **The Dependency Array:** \* `[]`: Runs only once (on mount).
+  - `[data]`: Runs every time `data` changes.
+
+### 3. useRef
+
+**The "Persistence" Hook.**
+A ref is a box that holds a value that stays the same across renders, but **changing it does not trigger a re-render.**
+
+- **Usage:** 1. Accessing a DOM element directly (e.g., focusing an input). 2. Storing a value that you need to keep track of (like a timer ID) without making the UI refresh.
+
+---
+
+### 4. useMemo vs. 5. useCallback
+
+These two are often confused because they both exist for **performance optimization (memoization).**
+
+| Hook              | What it caches (memoizes)     | Use Case                                                                                        |
+| :---------------- | :---------------------------- | :---------------------------------------------------------------------------------------------- |
+| **`useMemo`**     | The **result** of a function. | Avoid recalculating expensive math or filtering large arrays on every render.                   |
+| **`useCallback`** | The **function itself**.      | Prevent a child component from re-rendering unnecessarily because a function "looks new" to it. |
+
+### Summary Table for Quick Review
+
+| Hook          | Purpose                      | Does it trigger re-render?  |
+| :------------ | :--------------------------- | :-------------------------- |
+| `useState`    | Manage data                  | **Yes**                     |
+| `useEffect`   | Sync with external systems   | No (it runs _after_ render) |
+| `useRef`      | Grab DOM/Store "silent" data | **No**                      |
+| `useMemo`     | Cache a value/result         | No                          |
+| `useCallback` | Cache a function             | No                          |
+
+---
+
+### A Tip for your Code Review
+
+If you see `useMemo` or `useCallback` used everywhere, keep an eye out. Sometimes developers "over-memoize," which can actually make the code harder to read without providing a real performance boost. React is usually fast enough without them unless you're dealing with huge data sets or complex animations!
+
+**Would you like me to look at a specific snippet of your boss's code to explain how these hooks are interacting in that context?**
