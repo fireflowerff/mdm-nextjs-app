@@ -75,7 +75,7 @@ A ref is a box that holds a value that stays the same across renders, but **chan
 1. Accessing a DOM element directly (e.g., focusing an input).
 2. Storing a value that you need to keep track of (like a timer ID) without making the UI refresh.
 
---
+---
 
 ## 4. `useMemo` (Derived State)
 
@@ -94,7 +94,7 @@ const validationErrors = useMemo(
 );
 ```
 
---
+---
 
 ## 5 . `useCallback` (Performance & Stability)
 
