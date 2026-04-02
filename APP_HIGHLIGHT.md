@@ -84,6 +84,15 @@ useEffect(() => {
 }, [routePmtNo]);
 ```
 
+### 2. useEffect
+
+**The "Side Effect" Hook.**
+This tells React: "After you finish rendering, run this extra bit of code." It’s for synchronization with systems outside of React.
+
+- **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
+- **The Dependency Array:** \* `[]`: Runs only once (on mount).
+  - `[data]`: Runs every time `data` changes.
+
 ## 5. `useMemo` (Derived State)
 
 **Feature:** Calculates a value based on other state variables and caches it. It only recalculates if the inputs change.
@@ -134,15 +143,6 @@ This is how a component remembers things between renders. When you update a stat
 
 - **Usage:** For anything that changes on the screen (form inputs, toggles, data from an API).
 - **Example:** `const [count, setCount] = useState(0);`
-
-### 2. useEffect
-
-**The "Side Effect" Hook.**
-This tells React: "After you finish rendering, run this extra bit of code." It’s for synchronization with systems outside of React.
-
-- **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
-- **The Dependency Array:** \* `[]`: Runs only once (on mount).
-  - `[data]`: Runs every time `data` changes.
 
 ---
 
