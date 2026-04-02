@@ -64,6 +64,11 @@ const handleFind = useCallback(async () => {
 }, []);
 ```
 
+**The "Persistence" Hook.**
+A ref is a box that holds a value that stays the same across renders, but **changing it does not trigger a re-render.**
+
+- **Usage:** 1. Accessing a DOM element directly (e.g., focusing an input). 2. Storing a value that you need to keep track of (like a timer ID) without making the UI refresh.
+
 ## 4. `useEffect` (Lifecycle & Synchronization)
 
 **Feature:** Handles "Side Effects" like fetching data when the URL changes or focusing a UI element when a modal opens.
@@ -95,8 +100,6 @@ const validationErrors = useMemo(
   [paymentValidation.error, customerValidation.error],
 );
 ```
-
-useMemo vs. 5. useCallback
 
 These two are often confused because they both exist for **performance optimization (memoization).**
 
@@ -140,13 +143,6 @@ This tells React: "After you finish rendering, run this extra bit of code." Itâ€
 - **Usage:** Fetching data, setting up subscriptions, or manually changing the DOM.
 - **The Dependency Array:** \* `[]`: Runs only once (on mount).
   - `[data]`: Runs every time `data` changes.
-
-### 3. useRef
-
-**The "Persistence" Hook.**
-A ref is a box that holds a value that stays the same across renders, but **changing it does not trigger a re-render.**
-
-- **Usage:** 1. Accessing a DOM element directly (e.g., focusing an input). 2. Storing a value that you need to keep track of (like a timer ID) without making the UI refresh.
 
 ---
 
